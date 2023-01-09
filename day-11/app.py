@@ -1,5 +1,7 @@
 import sys
 
+MOD_CONSTANT = 1
+
 class Monkey:
     def __init__(self, id):
         self.id = id
@@ -19,7 +21,9 @@ class Monkey:
         self.op_value = value
     
     def set_test(self, t):
+        global MOD_CONSTANT
         self.test = int(t)
+        MOD_CONSTANT *= self.test # find GCD, divisors are prime
 
     def set_test_true(self, y):
         self.yes_monkey = y
@@ -48,13 +52,17 @@ class Monkey:
     def get_bored(self, item):
         return item // 3
 
-    def inspect(self):
+    def inspect(self, relief=True):
+        global MOD_CONSTANT
         throws = []
         while self.items:
             item = int(self.items.pop(0))
             self.activity += 1
             worry = self.run_op(item)
-            worry = self.get_bored(worry)
+            if relief:
+                worry = self.get_bored(worry)
+            else:
+                worry %= MOD_CONSTANT
             target = self.run_test(worry)
             throws.append({'target': target, 'item': worry})
         return throws
@@ -63,10 +71,10 @@ class Monkey:
         self.items.append(item)
 
 
-def iterate(monkeys):
+def iterate(monkeys, relief=True):
     for m in monkeys:
         monkey = monkeys[m]
-        items = monkey.inspect()
+        items = monkey.inspect(relief=relief)
         for toss in items:
             monkeys[toss['target']].catch(toss['item'])
 
@@ -77,6 +85,28 @@ def find_active_monkeys(monkeys):
     active.sort(reverse=True)
     top_two = active[0:2]
     return top_two[0] * top_two[1]
+
+def answer_pt1(monkeys):
+    for i in range(0, 20):
+        iterate(monkeys, relief=True)
+    answer_pt1 = find_active_monkeys(monkeys)
+    print('Answer #1:',answer_pt1)
+
+def answer_pt2(monkeys):
+    for i in range(0, 10000):
+        if i > 0 and i % 1000 == 0:
+            print('== After round', i, '==')
+            for m in monkeys:
+                print('Monkey', m, 'inspected items', monkeys[m].activity, 'times.')
+            print()
+        iterate(monkeys, relief=False)
+        
+
+    answer_pt2 = find_active_monkeys(monkeys)
+    print('Answer #2:',answer_pt2)
+
+
+
 
 INPUT = sys.argv[1] if len(sys.argv) >= 2 else 'test'
 f = open(INPUT, 'r')
@@ -112,9 +142,6 @@ for line in input:
 if None is not monkey:
     monkeys[monkey.id] = monkey
 
-for i in range(0, 20):
-    iterate(monkeys)
-answer_pt1 = find_active_monkeys(monkeys)
-print('Answer #1:',answer_pt1)
+#answer_pt1(monkeys)
 
-
+answer_pt2(monkeys)
